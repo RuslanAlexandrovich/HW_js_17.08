@@ -4,7 +4,7 @@ document.body.appendChild(wrapper);
 let form = document.createElement("form");
 form.style.display = "flex";
 form.style.flexDirection = "column";
-form.style.width = 30 + "%";
+form.style.width = "30%";
 
 wrapper.appendChild(form);
 
@@ -49,6 +49,17 @@ btn.addEventListener("click", (event) => {
     getData();
 });
 
+pages.addEventListener("click", async function (event) {
+    if (event.target.tagName === "A") {
+        event.preventDefault();
+        let page = parseInt(event.target.textContent);
+        let resp = await fetch(`http://www.omdbapi.com/?apikey=cad92c22&s=${inpTitle.value}&type=${select.value}&page=${page}`);
+        let pageData = await resp.json();
+        displayMovies(pageData.Search);
+        createPaginationLinks(page, Math.ceil(pageData.totalResults / 10));
+    }
+});
+
 async function getData() {
     let name = inpTitle.value;
     let format = select.value;
@@ -60,31 +71,36 @@ async function getData() {
         let totalObj = movies.totalResults;
         let totalResult = Math.ceil(totalObj / 10);
 
-        pages.innerHTML = ''; // Очищаємо попередні сторінки
-
-        for (let i = 1; i <= totalResult; i++) {
-            let pageLink = document.createElement("a");
-            pageLink.textContent = i;
-            pageLink.href = `http://www.omdbapi.com/?apikey=cad92c22&s=${name}&type=${format}&page=${i}`;
-            pages.appendChild(pageLink);
-
-            pageLink.addEventListener("click", async function (event) {
-                event.preventDefault();
-                let pageNumber = i;
-                let resp = await fetch(`http://www.omdbapi.com/?apikey=cad92c22&s=${name}&type=${format}&page=${pageNumber}`);
-                let page = await resp.json();
-                displayMovies(page.Search);
-            });
-        }
-
+        createPaginationLinks(1, totalResult);
         displayMovies(arrMovies);
     }
 }
 
-function displayMovies(movies) {
-    wrapAllFilms.innerHTML = ''; // Очищаємо попередні фільми
+function createPaginationLinks(currentPage, totalPageCount) {
+    pages.innerHTML = '';
 
-    movies.forEach(async (movie) => {
+    const maxVisiblePages = 10;
+    const halfMaxVisiblePages = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(currentPage - halfMaxVisiblePages, 1);
+    let endPage = Math.min(startPage + maxVisiblePages - 1, totalPageCount);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(endPage - maxVisiblePages + 1, 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        let pageLink = document.createElement("a");
+        pageLink.textContent = i;
+        pageLink.href = `#`;
+        pages.appendChild(pageLink);
+    }
+}
+
+function displayMovies(movies) {
+    wrapAllFilms.innerHTML = '';
+
+    movies.forEach(movie => {
         let wrapFilm = document.createElement("div");
 
         let poster = document.createElement("img");
